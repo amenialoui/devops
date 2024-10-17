@@ -46,9 +46,12 @@ public class EntrepriseServiceImpl implements IEntrepriseService {
         int employesStart = employeRepository.countEmployesByEntrepriseAndDate(entrepriseId, startDate);
         int employesEnd = employeRepository.countEmployesByEntrepriseAndDate(entrepriseId, endDate);
 
-        // Vérification pour éviter la division par zéro
+        // Gérer le cas où il n'y a pas d'employés au début de la période
         if (employesStart == 0) {
-            throw new IllegalArgumentException("Pas d'employés trouvés au début de la période");
+            if (employesEnd == 0) {
+                return 0.0; // Pas de croissance si aucun employé au début et à la fin
+            }
+            return 100.0; // 100% de croissance si on passe de 0 à un nombre positif
         }
         return ((double) (employesEnd - employesStart) / employesStart) * 100;
     }

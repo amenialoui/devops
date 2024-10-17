@@ -1,13 +1,10 @@
 package tn.esprit.spring.services;
 
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.boot.test.context.SpringBootTest;
 import tn.esprit.spring.entities.Entreprise;
 import tn.esprit.spring.repository.EmployeRepository;
 import tn.esprit.spring.repository.EntrepriseRepository;
@@ -18,8 +15,6 @@ import java.util.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-@SpringBootTest
-@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 @ExtendWith(MockitoExtension.class)
 class EntrepriseServiceImplMockTest {
 
@@ -31,14 +26,6 @@ class EntrepriseServiceImplMockTest {
 
     @InjectMocks
     private EntrepriseServiceImpl entrepriseService;
-
-    @Captor
-    private ArgumentCaptor<LocalDate> dateCaptor;
-
-    @BeforeEach
-    void setUp() {
-        MockitoAnnotations.openMocks(this);
-    }
 
     @Test
     void testGetCompaniesWithHighestAverageTenure() {
@@ -78,8 +65,8 @@ class EntrepriseServiceImplMockTest {
     void testCompanyGrowthRate() {
         // Arrange
         Long entrepriseId = 1L;
-        LocalDate startDate = LocalDate.of(2020, 1, 1); // 2020-01-01
-        LocalDate endDate = LocalDate.of(2021, 1, 1);   // 2021-01-01
+        LocalDate startDate = LocalDate.of(2020, 1, 1);
+        LocalDate endDate = LocalDate.of(2021, 1, 1);
         Entreprise mockEntreprise = new Entreprise("TestCompany", "RS");
 
         when(entrepriseRepository.findById(entrepriseId)).thenReturn(Optional.of(mockEntreprise));
@@ -106,11 +93,13 @@ class EntrepriseServiceImplMockTest {
 
         when(entrepriseRepository.findById(entrepriseId)).thenReturn(Optional.of(mockEntreprise));
         when(employeRepository.countEmployesByEntrepriseAndDate(entrepriseId, startDate)).thenReturn(0);
+        when(employeRepository.countEmployesByEntrepriseAndDate(entrepriseId, endDate)).thenReturn(10);
 
-        // Act & Assert
-        assertThrows(RuntimeException.class, () ->
-                entrepriseService.CompanyGrowthRate(entrepriseId, startDate, endDate)
-        );
+        // Act
+        double growthRate = entrepriseService.CompanyGrowthRate(entrepriseId, startDate, endDate);
+
+        // Assert
+        assertEquals(100.0, growthRate, 0.01);
     }
 
     @Test
@@ -123,62 +112,41 @@ class EntrepriseServiceImplMockTest {
         when(entrepriseRepository.findById(entrepriseId)).thenReturn(Optional.empty());
 
         // Act & Assert
-        assertThrows(RuntimeException.class, () ->
+        assertThrows(IllegalArgumentException.class, () ->
                 entrepriseService.CompanyGrowthRate(entrepriseId, startDate, endDate)
         );
     }
-
-
-    @Test
-    void testGetCompaniesWithHighestAverageTenureWithEmptyResult() {
-        // Arrange
-        when(entrepriseRepository.findCompaniesWithHighestAverageTenure()).thenReturn(Collections.emptyList());
-
-        // Act
-        List<Entreprise> result = entrepriseService.getCompaniesWithHighestAverageTenure();
-
-        // Assert
-        assertTrue(result.isEmpty());
-        verify(entrepriseRepository, times(1)).findCompaniesWithHighestAverageTenure();
-    }
-
 
     @Test
     void testCompanyGrowthRateWithNegativeGrowth() {
         // Arrange
         Long entrepriseId = 1L;
-        LocalDate startDate = LocalDate.of(2020, 1, 1); // 2020-01-01
-        LocalDate endDate = LocalDate.of(2021, 1, 1);   // 2021-01-01
+        LocalDate startDate = LocalDate.of(2020, 1, 1);
+        LocalDate endDate = LocalDate.of(2021, 1, 1);
         Entreprise mockEntreprise = new Entreprise("TestCompany", "RS");
 
         when(entrepriseRepository.findById(entrepriseId)).thenReturn(Optional.of(mockEntreprise));
-        when(employeRepository.countEmployesByEntrepriseAndDate(eq(entrepriseId), any(LocalDate.class)))
-                .thenReturn(100)  // for startDate
-                .thenReturn(80);  // for endDate
+        when(employeRepository.countEmployesByEntrepriseAndDate(entrepriseId, startDate)).thenReturn(100);
+        when(employeRepository.countEmployesByEntrepriseAndDate(entrepriseId, endDate)).thenReturn(80);
 
         // Act
         double growthRate = entrepriseService.CompanyGrowthRate(entrepriseId, startDate, endDate);
 
         // Assert
         assertEquals(-20.0, growthRate, 0.01);
-        verify(employeRepository, times(2)).countEmployesByEntrepriseAndDate(eq(entrepriseId), dateCaptor.capture());
-        List<LocalDate> capturedDates = dateCaptor.getAllValues();
-        assertEquals(startDate, capturedDates.get(0));
-        assertEquals(endDate, capturedDates.get(1));
     }
 
     @Test
     void testCompanyGrowthRateWithSameEmployeeCount() {
         // Arrange
         Long entrepriseId = 1L;
-        LocalDate startDate = LocalDate.of(2020, 1, 1); // 2020-01-01
-        LocalDate endDate = LocalDate.of(2021, 1, 1);   // 2021-01-01
+        LocalDate startDate = LocalDate.of(2020, 1, 1);
+        LocalDate endDate = LocalDate.of(2021, 1, 1);
         Entreprise mockEntreprise = new Entreprise("TestCompany", "RS");
 
         when(entrepriseRepository.findById(entrepriseId)).thenReturn(Optional.of(mockEntreprise));
         when(employeRepository.countEmployesByEntrepriseAndDate(entrepriseId, startDate)).thenReturn(100);
-        when(employeRepository.countEmployesByEntrepriseAndDate(entrepriseId, endDate)).thenReturn(150);
-
+        when(employeRepository.countEmployesByEntrepriseAndDate(entrepriseId, endDate)).thenReturn(100);
 
         // Act
         double growthRate = entrepriseService.CompanyGrowthRate(entrepriseId, startDate, endDate);

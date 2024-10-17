@@ -10,10 +10,9 @@ import tn.esprit.spring.entities.Entreprise;
 import tn.esprit.spring.repository.EmployeRepository;
 import tn.esprit.spring.repository.EntrepriseRepository;
 
-import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.Date;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -44,8 +43,8 @@ class EntrepriseServiceImplTest {
                     "Les entreprises doivent être triées par ancienneté moyenne décroissante.");
         }
 
-        Entreprise entrepriseAvecPlusHauteAncienneté = entreprises.get(0);
-        System.out.println("Entreprise avec la plus haute ancienneté : " + entrepriseAvecPlusHauteAncienneté.getName());
+        Entreprise entrepriseAvecHauteAnciennete = entreprises.get(0);
+        System.out.println("Entreprise avec la plus haute ancienneté : " + entrepriseAvecHauteAnciennete.getName());
     }
 
     @Test
@@ -95,10 +94,10 @@ class EntrepriseServiceImplTest {
         }
 
         long totalTenureInDays = 0;
-        Date currentDate = new Date();
+        LocalDate currentDate = LocalDate.now();
         for (Employe employe : employes) {
             if (employe.getContrat() != null && employe.getContrat().getDateDebut() != null) {
-                long tenureInDays = (currentDate.getTime() - employe.getContrat().getDateDebut().getTime()) / (1000 * 60 * 60 * 24);
+                long tenureInDays = ChronoUnit.DAYS.between(employe.getContrat().getDateDebut(), currentDate);
                 totalTenureInDays += tenureInDays;
             }
         }
