@@ -7,7 +7,7 @@ import org.springframework.stereotype.Repository;
 import tn.esprit.spring.entities.Employe;
 import tn.esprit.spring.entities.Entreprise;
 
-import java.util.Date;
+import java.time.LocalDate;
 import java.util.List;
 
 @Repository
@@ -18,7 +18,7 @@ public interface EmployeRepository extends JpaRepository<Employe, Integer> {
             "WHERE ent.id = :entrepriseId " +
             "AND e.contrat.dateDebut <= :date " +
             "AND (e.contrat.dateDebut IS NULL OR e.contrat.dateDebut <= :date)")
-    int countEmployesByEntrepriseAndDate(@Param("entrepriseId") Long entrepriseId, @Param("date") Date date);
+    int countEmployesByEntrepriseAndDate(@Param("entrepriseId") Long entrepriseId, @Param("date") LocalDate date);
 
     List<Employe> findByDepartements_Entreprise(Entreprise entreprise);
 }
